@@ -139,8 +139,7 @@ export default function App() {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <header className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-stone-800">소인수분해 약수 탐구기</h1>
-          <p className="text-stone-500 italic">소인수분해를 이용해 약수가 될 조건을 알아봅시다.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-800">소인수분해를 이용한 약수 찾기</h1>
         </header>
 
         {/* Numerator Input Section */}
@@ -170,39 +169,45 @@ export default function App() {
           </motion.div>
         ) : (
           <div className="space-y-12">
-            {/* Prime Factorization Display */}
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-4 text-2xl font-bold">
-                <span className="bg-stone-100 px-4 py-2 rounded-xl border border-stone-200">{numerator}</span>
-                <span>=</span>
-                <div className="flex items-center gap-2">
-                  {numeratorFactors.map((f, i) => (
-                    <React.Fragment key={i}>
-                      <FactorCard value={f} />
-                      {i < numeratorFactors.length - 1 && <span className="text-stone-400">×</span>}
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* Fraction & Calculation Section */}
             <div className="flex flex-col items-center space-y-8 overflow-x-auto py-4">
               <div className="flex items-center gap-6 min-w-max">
-                {/* Initial Fraction */}
+                {/* Left Fraction: Number / Calculated Denominator */}
                 <div className="flex flex-col items-center">
                   <div className="text-3xl font-bold px-4 py-2">{numerator}</div>
                   <div className="w-full h-1 bg-stone-800 rounded-full my-2"></div>
-                  <div className="flex items-center gap-2 min-h-[60px] px-4">
+                  <div className="text-3xl font-bold px-4 py-2 min-h-[60px] flex items-center">
+                    {denominatorFactors.length === 0 ? "?" : denominatorValue}
+                  </div>
+                </div>
+
+                <span className="text-3xl font-light text-stone-400">=</span>
+
+                {/* Right Fraction: Factorized Numerator / Factorized Denominator (Cards) */}
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-2 px-4 min-h-[60px]">
+                    {numeratorFactors.map((f, i) => (
+                      <React.Fragment key={`anim-num-${i}`}>
+                        <FactorCard 
+                          value={f} 
+                          isCancelled={cancelledIndices.num.includes(i)}
+                        />
+                        {i < numeratorFactors.length - 1 && <span className="text-stone-400">×</span>}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  <div className="w-full h-1 bg-stone-800 rounded-full my-2"></div>
+                  <div className="flex items-center gap-2 px-4 min-h-[60px]">
                     {denominatorFactors.length === 0 ? (
                       <span className="text-stone-300 italic text-sm">소수를 선택하세요</span>
                     ) : (
                       denominatorFactors.map((f, i) => (
-                        <React.Fragment key={i}>
+                        <React.Fragment key={`anim-den-${i}`}>
                           <FactorCard 
                             value={f} 
-                            onClick={() => removeDenominatorFactor(i)} 
+                            onClick={() => removeDenominatorFactor(i)}
                             disabled={step !== 'idle'}
+                            isCancelled={cancelledIndices.den.includes(i)}
                           />
                           {i < denominatorFactors.length - 1 && <span className="text-stone-400">×</span>}
                         </React.Fragment>
@@ -211,49 +216,14 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Animation Steps */}
+                {/* Result Step */}
                 <AnimatePresence>
-                  {(step === 'factorizing' || step === 'cancelling' || step === 'result') && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-6"
-                    >
-                      <span className="text-3xl font-light text-stone-400">=</span>
-                      
-                      {/* Factorized Fraction */}
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-2 px-4 min-h-[60px]">
-                          {numeratorFactors.map((f, i) => (
-                            <React.Fragment key={i}>
-                              <FactorCard 
-                                value={f} 
-                                isCancelled={cancelledIndices.num.includes(i)}
-                              />
-                              {i < numeratorFactors.length - 1 && <span className="text-stone-400">×</span>}
-                            </React.Fragment>
-                          ))}
-                        </div>
-                        <div className="w-full h-1 bg-stone-800 rounded-full my-2"></div>
-                        <div className="flex items-center gap-2 px-4 min-h-[60px]">
-                          {denominatorFactors.map((f, i) => (
-                            <React.Fragment key={i}>
-                              <FactorCard 
-                                value={f} 
-                                isCancelled={cancelledIndices.den.includes(i)}
-                              />
-                              {i < denominatorFactors.length - 1 && <span className="text-stone-400">×</span>}
-                            </React.Fragment>
-                          ))}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
                   {step === 'result' && (
                     <motion.div 
+                      key="result-step"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
                       className="flex items-center gap-6"
                     >
                       <span className="text-3xl font-light text-stone-400">=</span>
@@ -284,14 +254,23 @@ export default function App() {
             {/* Controls */}
             <div className="flex justify-center gap-4">
               {step === 'idle' ? (
-                <button
-                  onClick={startCalculation}
-                  disabled={denominatorFactors.length === 0}
-                  className="flex items-center gap-2 bg-stone-800 text-white px-8 py-4 rounded-2xl hover:bg-stone-700 disabled:opacity-30 transition-all font-bold text-lg shadow-lg"
-                >
-                  <Play size={20} fill="currentColor" />
-                  계산하기
-                </button>
+                <div className="flex gap-4">
+                  <button
+                    onClick={startCalculation}
+                    disabled={denominatorFactors.length === 0}
+                    className="flex items-center gap-2 bg-stone-800 text-white px-8 py-4 rounded-2xl hover:bg-stone-700 disabled:opacity-30 transition-all font-bold text-lg shadow-lg"
+                  >
+                    <Play size={20} fill="currentColor" />
+                    계산하기
+                  </button>
+                  <button
+                    onClick={resetAll}
+                    className="flex items-center gap-2 bg-stone-100 text-stone-600 px-6 py-3 rounded-2xl hover:bg-stone-200 transition-all font-bold"
+                  >
+                    <ArrowLeft size={18} />
+                    다른 수 입력 (분자)
+                  </button>
+                </div>
               ) : (
                 <div className="flex gap-4">
                   <button
