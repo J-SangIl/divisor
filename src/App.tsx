@@ -79,8 +79,6 @@ export default function App() {
   };
 
   const startCalculation = async () => {
-    if (denominatorFactors.length === 0) return;
-    
     // Step 1: Show factorization
     setStep('factorizing');
     await new Promise(r => setTimeout(r, 1000));
@@ -177,7 +175,7 @@ export default function App() {
                   <div className="text-3xl font-bold px-4 py-2">{numerator}</div>
                   <div className="w-full h-1 bg-stone-800 rounded-full my-2"></div>
                   <div className="text-3xl font-bold px-4 py-2 min-h-[60px] flex items-center">
-                    {denominatorFactors.length === 0 ? "?" : denominatorValue}
+                    {denominatorFactors.length === 0 ? "1" : denominatorValue}
                   </div>
                 </div>
 
@@ -257,7 +255,6 @@ export default function App() {
                 <div className="flex gap-4">
                   <button
                     onClick={startCalculation}
-                    disabled={denominatorFactors.length === 0}
                     className="flex items-center gap-2 bg-stone-800 text-white px-8 py-4 rounded-2xl hover:bg-stone-700 disabled:opacity-30 transition-all font-bold text-lg shadow-lg"
                   >
                     <Play size={20} fill="currentColor" />
